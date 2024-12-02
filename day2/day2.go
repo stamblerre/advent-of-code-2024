@@ -23,39 +23,50 @@ func countSafeReports(filename string, useDampener bool) (int, error) {
 	}
 	countSafe := 0
 	for _, report := range reports {
-		increasing := false
-		isFirstViolation := true
-		for i, val := range report {
-			if i == 0 {
-				continue
-			}
-
-			prev := report[i-1]
-			// check if it's increasing or decreasing at the first value
-			if i == 1 {
-				if prev < val {
-					increasing = true
-				}
-			}
-
-			hasViolation := prev == val || (increasing && (val > prev+3 || val < prev)) || (!increasing && (val < prev-3 || val > prev))
-			if hasViolation {
-				// this doesnt work
-				if useDampener && isFirstViolation {
-					isFirstViolation = false
-					continue
-				}
-				// in all other cases, record the violation
-				break
-			}
-
-			// we got to the end without breaking out of the loop
-			if i == len(report)-1 {
-				countSafe++
-			}
+		if isSafe(report) {
+			countSafe++
+			continue
+		}
+		if useDampener && isSafeWithDampener(report) {
+			countSafe++
 		}
 	}
 	return countSafe, nil
+}
+
+func isSafeWithDampener(report []int) bool {
+	variants := [][]int{}
+	for i := 0; i < len(report); i++ {
+		variants = append(variants, append(append([]int{}, report[0:i]...), report[i+1:]...))
+	}
+	// collect variants...
+	for _, variant := range variants {
+		if isSafe(variant) {
+			return true
+		}
+	}
+	return false
+}
+
+func isSafe(report []int) bool {
+	increasing := false
+	for i, val := range report {
+		if i == 0 {
+			continue
+		}
+
+		prev := report[i-1]
+		// check if it's increasing or decreasing at the first value
+		if i == 1 {
+			if prev < val {
+				increasing = true
+			}
+		}
+		if prev == val || (increasing && (val > prev+3 || val < prev)) || (!increasing && (val < prev-3 || val > prev)) {
+			return false
+		}
+	}
+	return true
 }
 
 func readReports(filename string) ([][]int, error) {

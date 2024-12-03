@@ -39,7 +39,6 @@ func isSafeWithDampener(report []int) bool {
 	for i := 0; i < len(report); i++ {
 		variants = append(variants, append(append([]int{}, report[0:i]...), report[i+1:]...))
 	}
-	// collect variants...
 	for _, variant := range variants {
 		if isSafe(variant) {
 			return true
@@ -56,11 +55,8 @@ func isSafe(report []int) bool {
 		}
 
 		prev := report[i-1]
-		// check if it's increasing or decreasing at the first value
-		if i == 1 {
-			if prev < val {
-				increasing = true
-			}
+		if i == 1 && prev < val {
+			increasing = true
 		}
 		if prev == val || (increasing && (val > prev+3 || val < prev)) || (!increasing && (val < prev-3 || val > prev)) {
 			return false

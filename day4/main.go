@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"slices"
 	"strings"
 )
 
@@ -14,6 +13,13 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("Count: %v\n", result)
+}
+
+var depthToCharMap = map[int]rune{
+	0: 'X',
+	1: 'M',
+	2: 'A',
+	3: 'S',
 }
 
 func wordSearch(filename string) (int, error) {
@@ -29,135 +35,49 @@ func wordSearch(filename string) (int, error) {
 			input[i] = append(input[i], c)
 		}
 	}
-	transposedInput := transposeVertical(input)
-	linearCount := countLinear(input) + countLinear(transposedInput)
-	fmt.Printf("Linear count: %v\n", linearCount)
-	horizontalFlip := flipHorizontally(input)
-	fmt.Println(toString(horizontalFlip))
-	verticalFlip := flipVertically(input)
-	fmt.Println(toString(verticalFlip))
-	diagonalCount := countDiagonal(input) + countDiagonal(transposedInput) + countDiagonal(horizontalFlip) + countDiagonal(verticalFlip)
-	return linearCount + diagonalCount, nil
-}
-
-func toString(input [][]rune) string {
-	var result string
-	for _, line := range input {
-		result += string(line) + "\n"
-	}
-	return result
-}
-
-func countLinear(input [][]rune) int {
-	count := 0
-	for _, line := range input {
-		// first forwards
-		count += containsXmasLinear(line)
-
-		// then reverse & try backwards
-		reversed := []rune{}
-		reversed = append(reversed, line...)
-		slices.Reverse(reversed)
-		count += containsXmasLinear(reversed)
-	}
-	return count
-}
-
-func transposeVertical(input [][]rune) [][]rune {
-	// assumes that every line has the same length...
-	verticalInput := make([][]rune, len(input[0]))
+	queue := []*coordinate{}
 	for i := 0; i < len(input); i++ {
-		for j := 0; j < len(input[i]); j++ {
-			if verticalInput[j] == nil {
-				verticalInput[j] = make([]rune, len(input))
-			}
-			verticalInput[j][i] = input[i][j]
-		}
-	}
-	return verticalInput
-}
-
-func flipHorizontally(input [][]rune) [][]rune {
-	flipped := make([][]rune, len(input))
-	for i, line := range input {
-		flipped[i] = make([]rune, len(line))
+		line := input[i]
 		for j := 0; j < len(line); j++ {
-			flipped[i][len(line)-j-1] = line[j]
+			queue = append(queue, &coordinate{
+				i:            i,
+				j:            j,
+				expectedChar: depthToCharMap[0], // depth is 0
+			})
 		}
 	}
-	return flipped
-}
+	for len(queue) > 0 {
+		item := queue[0]
+		queue = queue[1:]
 
-func flipVertically(input [][]rune) [][]rune {
-	flipped := make([][]rune, len(input))
-	for i, line := range input {
-		row := len(input) - 1 - i
-		flipped[row] = make([]rune, len(line))
-		copy(flipped[row], line)
-	}
-	return flipped
-}
-
-func containsXmasLinear(line []rune) int {
-	count := 0
-	for i := 0; i < len(line); i++ {
-		indexMap := map[rune]int{
-			'X': i,
-			'M': i + 1,
-			'A': i + 2,
-			'S': i + 3,
-		}
-		if indexMap['S'] >= len(line) {
+		// don't bother validating coordinates until now
+		if item.i >= len(input) || item.j >= len(input[item.i]) {
 			continue
 		}
-		valid := true
-		for r, index := range indexMap {
-			if line[index] != r {
-				valid = false
-				break
-			}
+		if input[item.i][item.j] != item.expectedChar {
+			continue
 		}
-		if valid {
-			count++
-		}
-	}
-	return count
-}
+		depth := item.findDepth()
+		if depth == 0 {
+			for i := -1; i <= 1; i++ {
+				for j := -1; j <= 1; j++ {
 
-func countDiagonal(input [][]rune) int {
-	count := 0
-	for i := 0; i < len(input); i++ {
-		for j := 0; j < len(input[i]); j++ {
-			rowIndexMap := map[rune]int{
-				'X': i,
-				'M': i + 1,
-				'A': i + 2,
-				'S': i + 3,
-			}
-			columnIndexMap := map[rune]int{
-				'X': j,
-				'M': j + 1,
-				'A': j + 2,
-				'S': j + 3,
-			}
-			if rowIndexMap['S'] >= len(input) {
-				continue
-			}
-			if columnIndexMap['S'] >= len(input[i]) {
-				continue
-			}
-			valid := true
-			for r, rowIndex := range rowIndexMap {
-				colIndex := columnIndexMap[r]
-				if input[rowIndex][colIndex] != r {
-					valid = false
-					break
 				}
 			}
-			if valid {
-				count++
-			}
 		}
 	}
-	return count
+	return -1, nil
+}
+
+type coordinate struct {
+	i, j         int
+	expectedChar rune
+	previous     *coordinate
+}
+
+func (c *coordinate) findDepth() int {
+	if c.previous == nil {
+		return 0
+	}
+	return 1 + c.previous.findDepth()
 }

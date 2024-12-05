@@ -3,50 +3,72 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"strings"
+
+	"advent-of-code-2024.com/shared"
 )
 
 func main() {
-	result, err := wordSearch("testdata/input.txt")
+	part1, err := wordSearchForXmas("testdata/input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Count: %v\n", result)
+	fmt.Printf("Count XMAS: %v\n", part1)
+	part2, err := wordSearchForMasXed("testdata/input.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Count MAS X'd: %v\n", part2)
 }
 
-var depthToCharMap = map[int]rune{
-	0: 'X',
-	1: 'M',
-	2: 'A',
-	3: 'S',
-}
-
-func wordSearch(filename string) (int, error) {
-	text, err := os.ReadFile(filename)
+func wordSearchForXmas(filename string) (int, error) {
+	nodes, err := wordSearchForString(filename, "XMAS" /*diagonalOnly=*/, false)
 	if err != nil {
 		return -1, err
 	}
-	// convert to 2D array
-	var input [][]rune
-	for i, line := range strings.Split(string(text), "\n") {
-		input = append(input, []rune{})
-		for _, c := range line {
-			input[i] = append(input[i], c)
+	return len(nodes), nil
+}
+
+func wordSearchForMasXed(filename string) (int, error) {
+	nodes, err := wordSearchForString(filename, "MAS" /*diagonalOnly=*/, true)
+	if err != nil {
+		return -1, err
+	}
+	seenAs := map[coordinate]struct{}{}
+	count := 0
+	for _, seq := range nodes {
+		// previous should always be the A
+		if _, ok := seenAs[*seq.previous.coordinate]; ok {
+			count++
+		} else {
+			seenAs[*seq.previous.coordinate] = struct{}{}
 		}
 	}
-	queue := []*coordinate{}
+	return count, nil
+}
+
+func wordSearchForString(filename string, str string, diagonalOnly bool) ([]*node, error) {
+	input, err := shared.FileToRuneMatrix(filename)
+	if err != nil {
+		return nil, err
+	}
+	depthToCharMap := map[int]rune{}
+	for i, c := range str {
+		depthToCharMap[i] = c
+	}
+	queue := []*node{}
 	for i := 0; i < len(input); i++ {
 		line := input[i]
 		for j := 0; j < len(line); j++ {
-			queue = append(queue, &coordinate{
-				i:            i,
-				j:            j,
+			queue = append(queue, &node{
+				coordinate: &coordinate{
+					i: i,
+					j: j,
+				},
 				expectedChar: depthToCharMap[0], // depth is 0
 			})
 		}
 	}
-	count := 0
+	var validSequences []*node
 	for len(queue) > 0 {
 		item := queue[0]
 		queue = queue[1:]
@@ -62,17 +84,23 @@ func wordSearch(filename string) (int, error) {
 			continue
 		}
 		depth := item.findDepth()
-		if depth == 3 {
-			count++
+		if _, ok := depthToCharMap[depth+1]; !ok {
+			validSequences = append(validSequences, item)
 			continue
 		}
 		nextExpectedChar := depthToCharMap[depth+1]
 		if depth == 0 {
-			for i := -1; i <= 1; i++ {
-				for j := -1; j <= 1; j++ {
-					queue = append(queue, &coordinate{
-						i:            item.i + i,
-						j:            item.j + j,
+			indices := []int{-1, 1}
+			if !diagonalOnly {
+				indices = append(indices, 0)
+			}
+			for _, i := range indices {
+				for _, j := range indices {
+					queue = append(queue, &node{
+						coordinate: &coordinate{
+							i: item.i + i,
+							j: item.j + j,
+						},
 						expectedChar: nextExpectedChar,
 						previous:     item,
 					})
@@ -80,30 +108,36 @@ func wordSearch(filename string) (int, error) {
 			}
 		} else {
 			deltaI, deltaJ := item.difference(item.previous)
-			queue = append(queue, &coordinate{
-				i:            item.i + deltaI,
-				j:            item.j + deltaJ,
+			queue = append(queue, &node{
+				coordinate: &coordinate{
+					i: item.i + deltaI,
+					j: item.j + deltaJ,
+				},
 				expectedChar: nextExpectedChar,
 				previous:     item,
 			})
 		}
 	}
-	return count, nil
+	return validSequences, nil
 }
 
 type coordinate struct {
-	i, j         int
-	expectedChar rune
-	previous     *coordinate
+	i, j int
 }
 
-func (c *coordinate) findDepth() int {
+type node struct {
+	*coordinate
+	expectedChar rune
+	previous     *node
+}
+
+func (c *node) findDepth() int {
 	if c.previous == nil {
 		return 0
 	}
 	return 1 + c.previous.findDepth()
 }
 
-func (c1 *coordinate) difference(c2 *coordinate) (int, int) {
+func (c1 *node) difference(c2 *node) (int, int) {
 	return c1.i - c2.i, c1.j - c2.j
 }

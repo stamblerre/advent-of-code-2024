@@ -51,10 +51,6 @@ func wordSearchForString(filename string, str string, diagonalOnly bool) ([]*nod
 	if err != nil {
 		return nil, err
 	}
-	depthToCharMap := map[int]rune{}
-	for i, c := range str {
-		depthToCharMap[i] = c
-	}
 	queue := []*node{}
 	for i := 0; i < len(input); i++ {
 		line := input[i]
@@ -64,7 +60,7 @@ func wordSearchForString(filename string, str string, diagonalOnly bool) ([]*nod
 					i: i,
 					j: j,
 				},
-				expectedChar: depthToCharMap[0], // depth is 0
+				expectedChar: rune(str[0]), // depth is 0
 			})
 		}
 	}
@@ -84,11 +80,11 @@ func wordSearchForString(filename string, str string, diagonalOnly bool) ([]*nod
 			continue
 		}
 		depth := item.findDepth()
-		if _, ok := depthToCharMap[depth+1]; !ok {
+		if depth+1 >= len(str) {
 			validSequences = append(validSequences, item)
 			continue
 		}
-		nextExpectedChar := depthToCharMap[depth+1]
+		nextExpectedChar := rune(str[depth+1])
 		if depth == 0 {
 			indices := []int{-1, 1}
 			if !diagonalOnly {

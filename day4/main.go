@@ -46,11 +46,15 @@ func wordSearch(filename string) (int, error) {
 			})
 		}
 	}
+	count := 0
 	for len(queue) > 0 {
 		item := queue[0]
 		queue = queue[1:]
 
 		// don't bother validating coordinates until now
+		if item.i < 0 || item.j < 0 {
+			continue
+		}
 		if item.i >= len(input) || item.j >= len(input[item.i]) {
 			continue
 		}
@@ -58,15 +62,33 @@ func wordSearch(filename string) (int, error) {
 			continue
 		}
 		depth := item.findDepth()
+		if depth == 3 {
+			count++
+			continue
+		}
+		nextExpectedChar := depthToCharMap[depth+1]
 		if depth == 0 {
 			for i := -1; i <= 1; i++ {
 				for j := -1; j <= 1; j++ {
-
+					queue = append(queue, &coordinate{
+						i:            item.i + i,
+						j:            item.j + j,
+						expectedChar: nextExpectedChar,
+						previous:     item,
+					})
 				}
 			}
+		} else {
+			deltaI, deltaJ := item.difference(item.previous)
+			queue = append(queue, &coordinate{
+				i:            item.i + deltaI,
+				j:            item.j + deltaJ,
+				expectedChar: nextExpectedChar,
+				previous:     item,
+			})
 		}
 	}
-	return -1, nil
+	return count, nil
 }
 
 type coordinate struct {
@@ -80,4 +102,8 @@ func (c *coordinate) findDepth() int {
 		return 0
 	}
 	return 1 + c.previous.findDepth()
+}
+
+func (c1 *coordinate) difference(c2 *coordinate) (int, int) {
+	return c1.i - c2.i, c1.j - c2.j
 }

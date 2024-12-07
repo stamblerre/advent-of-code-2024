@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"advent-of-code-2024.com/shared"
+	"advent-of-code-2024.com/internal/shared"
 )
 
 func main() {

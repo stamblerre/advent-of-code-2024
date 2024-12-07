@@ -6,7 +6,7 @@ import (
 	"advent-of-code-2024.com/internal/shared"
 )
 
-func TestDay7(t *testing.T) {
+func TestToday(t *testing.T) {
 	for _, tc := range []struct {
 		filename  string
 		expected1 int
@@ -14,8 +14,8 @@ func TestDay7(t *testing.T) {
 	}{
 		{
 			filename:  "testdata/test_input.txt",
-			expected1: 3749,
-			expected2: 11387,
+			expected1: -1,
+			expected2: -1,
 		},
 	} {
 		day := &today{}

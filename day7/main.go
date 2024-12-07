@@ -10,29 +10,7 @@ import (
 	"advent-of-code-2024.com/internal/shared"
 )
 
-func main() {
-	part1, part2, err := run("testdata/input.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Result for part 1: %v\n", part1)
-	fmt.Printf("Result for part 2: %v\n", part2)
-}
-
-func run(filename string) (int, int, error) {
-	input, err := readInput(filename)
-	if err != nil {
-		return -1, -1, err
-	}
-	part1, err := part1(input)
-	if err != nil {
-		return -1, -1, err
-	}
-	part2, err := part2(input)
-	if err != nil {
-		return -1, -1, err
-	}
-	return part1, part2, nil
+type today struct {
 }
 
 type equation struct {
@@ -40,7 +18,38 @@ type equation struct {
 	inputs    []int
 }
 
-func part1(equations []*equation) (int, error) {
+func (t *today) ReadInput(filename string) (any, error) {
+	text, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	var equations []*equation
+	for _, line := range strings.Split(string(text), "\n") {
+		split := strings.Split(line, ":")
+		if len(split) != 2 {
+			return nil, fmt.Errorf("more than 1 colon in line: %s", line)
+		}
+		result, err := strconv.Atoi(split[0])
+		if err != nil {
+			return nil, err
+		}
+		inputs, err := shared.StrSliceToInt(strings.Split(split[1], " "))
+		if err != nil {
+			return nil, err
+		}
+		equations = append(equations, &equation{
+			testValue: result,
+			inputs:    inputs,
+		})
+	}
+	return equations, nil
+}
+
+func (t *today) Part1(input any) (int, error) {
+	equations, ok := input.([]*equation)
+	if !ok {
+		return -1, fmt.Errorf("unexpected input format %T", equations)
+	}
 	result := 0
 	for _, e := range equations {
 		solveable, err := solveable(e /*useConcatenate*/, false)
@@ -54,7 +63,11 @@ func part1(equations []*equation) (int, error) {
 	return result, nil
 }
 
-func part2(equations []*equation) (int, error) {
+func (t *today) Part2(input any) (int, error) {
+	equations, ok := input.([]*equation)
+	if !ok {
+		return -1, fmt.Errorf("unexpected input format %T", equations)
+	}
 	result := 0
 	for _, e := range equations {
 		solveable, err := solveable(e /*useConcatenate*/, true)
@@ -66,6 +79,14 @@ func part2(equations []*equation) (int, error) {
 		}
 	}
 	return result, nil
+}
+
+func main() {
+	day := &today{}
+	_, _, err := shared.Run(day, "testdata/input.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func solveable(e *equation, useConcatenate bool) (bool, error) {
@@ -107,31 +128,4 @@ func findAllCombinations(inputs []int, acc []int, useConcatenate bool) ([]int, e
 func concatenate(a, b int) (int, error) {
 	combined := fmt.Sprintf("%d%d", a, b)
 	return strconv.Atoi(combined)
-}
-
-func readInput(filename string) ([]*equation, error) {
-	text, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	var equations []*equation
-	for _, line := range strings.Split(string(text), "\n") {
-		split := strings.Split(line, ":")
-		if len(split) != 2 {
-			return nil, fmt.Errorf("more than 1 colon in line: %s", line)
-		}
-		result, err := strconv.Atoi(split[0])
-		if err != nil {
-			return nil, err
-		}
-		inputs, err := shared.StrSliceToInt(strings.Split(split[1], " "))
-		if err != nil {
-			return nil, err
-		}
-		equations = append(equations, &equation{
-			testValue: result,
-			inputs:    inputs,
-		})
-	}
-	return equations, nil
 }

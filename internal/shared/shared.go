@@ -1,10 +1,37 @@
 package shared
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
+
+type Day interface {
+	ReadInput(filename string) (any, error)
+	Part1(input any) (int, error)
+	Part2(input any) (int, error)
+}
+
+func Run(d Day, filename string) (int, int, error) {
+	input, err := d.ReadInput(filename)
+	if err != nil {
+		return -1, -1, err
+	}
+	part1, err := d.Part1(input)
+	if err != nil {
+		return -1, -1, err
+	}
+	part2, err := d.Part2(input)
+	if err != nil {
+		return -1, -1, err
+	}
+	fmt.Printf("Result for part 1: %v\n", part1)
+	fmt.Printf("Result for part 2: %v\n", part2)
+	return part1, part2, nil
+}
+
+// random helpful things
 
 type Coordinate struct {
 	I, J int

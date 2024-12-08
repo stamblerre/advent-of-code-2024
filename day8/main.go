@@ -29,6 +29,14 @@ type antenna struct {
 }
 
 func (t *today) Part1(input any) (int, error) {
+	return helper(input /*includeHarmonics=*/, false)
+}
+
+func (t *today) Part2(input any) (int, error) {
+	return helper(input /*includeHarmonics=*/, true)
+}
+
+func helper(input any, includeHarmonics bool) (int, error) {
 	matrix, ok := input.([][]rune)
 	if !ok {
 		return -1, fmt.Errorf("unexpected type %T of input", input)
@@ -61,27 +69,46 @@ func (t *today) Part1(input any) (int, error) {
 				continue
 			}
 
-			// should be 2 possible antinodes, 1 where antenna1
-			// is 2X away, another where antenna2 is 2X away
-			delta := antenna1.Delta(&antenna2.Coordinate).Multiply(2)
+			if !includeHarmonics {
+				// should be 2 possible antinodes, 1 where antenna1
+				// is 2X away, another where antenna2 is 2X away
+				delta := antenna1.Delta(&antenna2.Coordinate).Multiply(2)
 
-			for i, antenna := range []*antenna{antenna1, antenna2} {
-				var antinode *shared.Coordinate
-				if i == 0 {
-					antinode = antenna.Sub(delta)
-				} else {
-					antinode = antenna.Add(delta)
+				for i, antenna := range []*antenna{antenna1, antenna2} {
+					var antinode *shared.Coordinate
+					if i == 0 {
+						antinode = antenna.Sub(delta)
+					} else {
+						antinode = antenna.Add(delta)
+					}
+					if !shared.InBounds(matrix, antinode) {
+						continue
+					}
+					antinodes[*antinode] = struct{}{}
 				}
-				if !shared.InBounds(matrix, antinode) {
-					continue
+			} else {
+				// can be way more antinodes now
+				// start by subtracting from antenna1
+				delta := antenna1.Delta(&antenna2.Coordinate)
+				antinode := &antenna1.Coordinate
+				for {
+					antinode = antinode.Sub(delta)
+					if !shared.InBounds(matrix, antinode) {
+						break
+					}
+					antinodes[*antinode] = struct{}{}
 				}
-				antinodes[*antinode] = struct{}{}
+				// now add to antenna2
+				antinode = &antenna2.Coordinate
+				for {
+					antinode = antinode.Add(delta)
+					if !shared.InBounds(matrix, antinode) {
+						break
+					}
+					antinodes[*antinode] = struct{}{}
+				}
 			}
 		}
 	}
 	return len(antinodes), nil
-}
-
-func (t *today) Part2(input any) (int, error) {
-	return -1, nil
 }

@@ -15,7 +15,7 @@ func TestToday(t *testing.T) {
 		{
 			filename:  "testdata/test_input.txt",
 			expected1: 14,
-			expected2: -1,
+			expected2: 34,
 		},
 	} {
 		day := &today{}

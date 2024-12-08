@@ -47,7 +47,7 @@ func wordSearchForMasXed(filename string) (int, error) {
 }
 
 func wordSearchForString(filename string, str string, diagonalOnly bool) ([]*node, error) {
-	input, err := shared.FileToRuneMatrix(filename)
+	input, err := shared.ReadRuneMatrix(filename)
 	if err != nil {
 		return nil, err
 	}

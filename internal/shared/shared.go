@@ -41,6 +41,13 @@ type CoordinateDelta struct {
 	DeltaI, DeltaJ int
 }
 
+func (d *CoordinateDelta) Multiply(i int) *CoordinateDelta {
+	return &CoordinateDelta{
+		DeltaI: d.DeltaI * i,
+		DeltaJ: d.DeltaJ * i,
+	}
+}
+
 func (c *Coordinate) Add(d *CoordinateDelta) *Coordinate {
 	return &Coordinate{
 		I: c.I + d.DeltaI,
@@ -48,7 +55,25 @@ func (c *Coordinate) Add(d *CoordinateDelta) *Coordinate {
 	}
 }
 
-func FileToRuneMatrix(filename string) ([][]rune, error) {
+func (c *Coordinate) Sub(d *CoordinateDelta) *Coordinate {
+	return &Coordinate{
+		I: c.I - d.DeltaI,
+		J: c.J - d.DeltaJ,
+	}
+}
+
+func (c1 *Coordinate) Delta(c2 *Coordinate) *CoordinateDelta {
+	return &CoordinateDelta{
+		DeltaI: c1.I - c2.I,
+		DeltaJ: c1.J - c2.J,
+	}
+}
+
+func InBounds(matrix [][]rune, coord *Coordinate) bool {
+	return coord.I >= 0 && coord.J >= 0 && coord.I < len(matrix) && coord.J < len(matrix[coord.I])
+}
+
+func ReadRuneMatrix(filename string) ([][]rune, error) {
 	text, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -77,6 +102,12 @@ func StrSliceToInt(strOfInts []string) ([]int, error) {
 		result = append(result, i)
 	}
 	return result, nil
+}
+
+func PrintRuneMatrix(matrix [][]rune) {
+	for _, line := range matrix {
+		fmt.Println(RuneSliceString(line))
+	}
 }
 
 func RuneSliceString(s []rune) []string {

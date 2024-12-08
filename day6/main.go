@@ -17,7 +17,7 @@ func main() {
 }
 
 func run(filename string) (int, int, error) {
-	input, err := shared.FileToRuneMatrix(filename)
+	input, err := shared.ReadRuneMatrix(filename)
 	if err != nil {
 		return -1, -1, err
 	}
@@ -109,7 +109,7 @@ func patrol(start *shared.Coordinate, input [][]rune) (int, bool, error) {
 			next := guard.Add(delta)
 
 			// Trying to go outside the mapped area, so you're done.
-			if !inBounds(next, input) {
+			if !shared.InBounds(input, next) {
 				return len(visited), false, nil
 			}
 
@@ -158,10 +158,6 @@ func guardRotations(r rune) ([]rune, error) {
 		return nil, fmt.Errorf("didn't find %s in order", string(r))
 	}
 	return append(append([]rune{r}, order[index+1:]...), order[:index]...), nil
-}
-
-func inBounds(coord *shared.Coordinate, input [][]rune) bool {
-	return coord.I >= 0 && coord.J >= 0 && coord.I < len(input) && coord.J < len(input[coord.I])
 }
 
 type directionalCoordinate struct {

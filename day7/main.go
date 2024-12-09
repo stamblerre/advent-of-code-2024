@@ -33,7 +33,7 @@ func (t *today) ReadInput(filename string) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		inputs, err := shared.StrSliceToInt(strings.Split(split[1], " "))
+		inputs, err := shared.StringSliceToInt(strings.Split(split[1], " "))
 		if err != nil {
 			return nil, err
 		}

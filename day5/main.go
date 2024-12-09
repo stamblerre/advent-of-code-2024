@@ -66,13 +66,13 @@ func readInput(filename string) ([]pageOrder, [][]int, error) {
 	var updates [][]int
 	for _, line := range strings.Split(string(text), "\n") {
 		if order := strings.Split(line, "|"); len(order) == 2 {
-			orderAsInts, err := shared.StrSliceToInt(order)
+			orderAsInts, err := shared.StringSliceToInt(order)
 			if err != nil {
 				return nil, nil, err
 			}
 			orders = append(orders, pageOrder{x: orderAsInts[0], y: orderAsInts[1]})
 		} else if update := strings.Split(line, ","); len(update) > 1 {
-			updateAsInt, err := shared.StrSliceToInt(update)
+			updateAsInt, err := shared.StringSliceToInt(update)
 			if err != nil {
 				return nil, nil, err
 			}

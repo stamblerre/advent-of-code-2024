@@ -89,13 +89,38 @@ func ReadRuneMatrix(filename string) ([][]rune, error) {
 	return input, nil
 }
 
-func StrSliceToInt(strOfInts []string) ([]int, error) {
+func StringSliceToInt(strOfInts []string) ([]int, error) {
+	var slice []any
+	for _, s := range strOfInts {
+		slice = append(slice, s)
+	}
+	return sliceToInt(slice)
+}
+
+func RuneSliceToInt(strOfInts []rune) ([]int, error) {
+	var slice []any
+	for _, s := range strOfInts {
+		slice = append(slice, s)
+	}
+	return sliceToInt(slice)
+}
+
+func sliceToInt(strOfInts []any) ([]int, error) {
 	var result []int
 	for _, a := range strOfInts {
 		if a == "" {
 			continue
 		}
-		i, err := strconv.Atoi(a)
+		var s string
+		switch a := a.(type) {
+		case rune:
+			s = string(a)
+		case string:
+			s = a
+		default:
+			return nil, fmt.Errorf("unexpected type %T for int conversion", a)
+		}
+		i, err := strconv.Atoi(s)
 		if err != nil {
 			return nil, err
 		}

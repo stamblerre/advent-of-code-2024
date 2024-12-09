@@ -33,10 +33,9 @@ func (t *today) Part2(input any) (int, error) {
 }
 
 type block struct {
-	id         int // order for free blocks
-	size       int
-	typ        BlockType
-	startIndex int
+	id   int // order for free blocks
+	size uint
+	typ  BlockType
 }
 
 type BlockType int
@@ -69,10 +68,9 @@ func implementation(input any, completeFiles bool) (int, error) {
 				expanded = append(expanded, fmt.Sprintf("%d", id))
 			}
 			blocks = append(blocks, &block{
-				id:         id,
-				size:       size,
-				typ:        File,
-				startIndex: index,
+				id:   id,
+				size: uint(size),
+				typ:  File,
 			})
 			id++
 		} else {
@@ -81,92 +79,116 @@ func implementation(input any, completeFiles bool) (int, error) {
 				expanded = append(expanded, ".")
 			}
 			blocks = append(blocks, &block{
-				size:       size,
-				typ:        Free,
-				startIndex: index,
+				size: uint(size),
+				typ:  Free,
 			})
 		}
 		index += size
 	}
-	shifted, err := shiftBlocks(expanded, blocks, completeFiles)
+	var shifted []string
+	if completeFiles {
+		shifted, err = shiftBlocks(blocks)
+	} else {
+		shifted, err = shiftFiles(expanded)
+	}
 	if err != nil {
 		return -1, err
 	}
-	checksum, err := checksum(shifted)
-	return int(checksum), err
+	return checksum(shifted)
 }
 
-func shiftBlocks(text []string, blocks []*block, completeFiles bool) ([]string, error) {
-	if completeFiles {
-		// you still need to track last file index
-		for i := len(blocks) - 1; i >= 0; i-- {
-			if blocks[i].typ != File {
-				continue
-			}
-			file := blocks[i]
-			for j := i - 1; j >= 0; j-- {
-				space := blocks[j]
-				// found a match
-				if space.typ == Free && space.size >= file.size {
-
-					// insert the file here
-					newBlocks := append(blocks[0:j], file)
-
-					remainderIndex := j + 1
-
-					// leftover space?
-					if space.size > file.size {
-						remainingSpace := &block{
-							typ:        Free,
-							size:       file.size - space.size,
-							startIndex: space.startIndex + file.size,
-						}
-						newBlocks = append(newBlocks, remainingSpace)
-
-						// check if the block after contains free space to merge up? (unlikely...)
-
-						if j+1 < len(blocks) {
-							if after := blocks[j+1]; after.typ == Free {
-								remainingSpace.size += after.size
-								remainderIndex = j + 2
-							}
-						}
-					}
-					newBlocks = append(newBlocks, blocks[remainderIndex:i]...)
-					newBlocks = append(newBlocks, blocks[i+1:]...)
-
-					blocks = newBlocks
-					break // we are done
-				}
-			}
+func shiftFiles(text []string) ([]string, error) {
+	// find the last index of a file
+	lastFileIndex := -1
+	for i := len(text) - 1; i >= 0; i-- {
+		if text[i] == "." {
+			continue
 		}
-		return blocksToText(blocks), nil
+		lastFileIndex = i
+		break
 	}
-	if !completeFiles {
-		// find the last index of a file
-		lastFileIndex := -1
-		for i := len(blocks) - 1; i >= 0; i-- {
-			if blocks[i].typ != File {
-				continue
-			}
-			lastFileIndex = blocks[i].startIndex
+	for i, value := range text {
+		if value != "." {
+			continue
 		}
-		for i, value := range text {
-			if value != "." {
-				continue
-			}
-			if lastFileIndex <= i {
-				break
-			}
-			text[i] = text[lastFileIndex]
-			text[lastFileIndex] = "."
+		if lastFileIndex <= i {
+			break
+		}
+		text[i] = text[lastFileIndex]
+		text[lastFileIndex] = "."
+		lastFileIndex--
+		for text[lastFileIndex] == "." {
 			lastFileIndex--
-			for text[lastFileIndex] == "." {
-				lastFileIndex--
-			}
 		}
 	}
 	return text, nil
+}
+
+func shiftBlocks(blocks []*block) ([]string, error) {
+	// you still need to track last file index
+	findLastFile := func(start int) int {
+		for i := start; i >= 0; i-- {
+			if blocks[i].typ != File {
+				continue
+			}
+			return i
+		}
+		return -1
+	}
+	lastFileIndex := findLastFile(len(blocks) - 1)
+	for lastFileIndex >= 0 {
+		file := blocks[lastFileIndex]
+		spaceIndex := -1
+		for i := 0; i < lastFileIndex; i++ {
+			space := blocks[i]
+			// found a match
+			if space.typ == Free && space.size >= file.size {
+				spaceIndex = i
+				break
+			}
+		}
+		if spaceIndex >= 0 {
+			space := blocks[spaceIndex]
+
+			// insert the file here
+			newBlocks := append([]*block{}, blocks[0:spaceIndex]...)
+			newBlocks = append(newBlocks, file)
+
+			remainderIndex := spaceIndex + 1
+
+			// leftover space?
+			if space.size > file.size {
+				remainingSpace := &block{
+					typ:  Free,
+					size: space.size - file.size,
+				}
+				newBlocks = append(newBlocks, remainingSpace)
+
+				// check if the block after contains free space to merge up? (unlikely...)
+
+				if spaceIndex+1 < len(blocks) {
+					if after := blocks[spaceIndex+1]; after.typ == Free {
+						remainingSpace.size += after.size
+						remainderIndex = spaceIndex + 2
+					}
+				}
+			}
+
+			newBlocks = append(newBlocks, blocks[remainderIndex:lastFileIndex]...)
+			// leave free space for the file
+			newBlocks = append(newBlocks, &block{
+				size: file.size,
+				typ:  Free,
+			})
+			newBlocks = append(newBlocks, blocks[lastFileIndex+1:]...)
+
+			// reset...
+			blocks = newBlocks
+		}
+		// reset last file index
+		lastFileIndex = findLastFile(lastFileIndex - 1)
+	}
+	return blocksToText(blocks), nil
 }
 
 func blocksToText(blocks []*block) []string {
@@ -184,8 +206,8 @@ func blocksToText(blocks []*block) []string {
 	return result
 }
 
-func checksum(expanded []string) (uint64, error) {
-	var result uint64
+func checksum(expanded []string) (int, error) {
+	var result int
 	for position, value := range expanded {
 		if value == "." {
 			continue
@@ -194,7 +216,7 @@ func checksum(expanded []string) (uint64, error) {
 		if err != nil {
 			return 0, err
 		}
-		result += (uint64(position) * uint64(asInt))
+		result += position * asInt
 	}
 	return result, nil
 }

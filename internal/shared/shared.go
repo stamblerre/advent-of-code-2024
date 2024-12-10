@@ -69,9 +69,36 @@ func (c1 *Coordinate) Delta(c2 *Coordinate) *CoordinateDelta {
 	}
 }
 
-func InBounds(matrix [][]rune, coord *Coordinate) bool {
-	return coord.I >= 0 && coord.J >= 0 && coord.I < len(matrix) && coord.J < len(matrix[coord.I])
+func InBounds(matrix any, coord *Coordinate) bool {
+	switch matrix := matrix.(type) {
+	case [][]rune:
+		return coord.I >= 0 && coord.J >= 0 && coord.I < len(matrix) && coord.J < len(matrix[coord.I])
+	case [][]int:
+		return coord.I >= 0 && coord.J >= 0 && coord.I < len(matrix) && coord.J < len(matrix[coord.I])
+	default:
+		return false
+	}
 }
+
+type Direction int
+
+const (
+	Right Direction = iota
+	Down
+	Left
+	Up
+)
+
+func DirectionalDelta() map[Direction]CoordinateDelta {
+	return map[Direction]CoordinateDelta{
+		Right: {DeltaI: 0, DeltaJ: 1},
+		Down:  {DeltaI: 1, DeltaJ: 0},
+		Left:  {DeltaI: 0, DeltaJ: -1},
+		Up:    {DeltaI: -1, DeltaJ: 0},
+	}
+}
+
+// reading files
 
 func ReadRuneMatrix(filename string) ([][]rune, error) {
 	text, err := os.ReadFile(filename)
@@ -87,6 +114,22 @@ func ReadRuneMatrix(filename string) ([][]rune, error) {
 		}
 	}
 	return input, nil
+}
+
+func ReadIntMatrix(filename string) ([][]int, error) {
+	runes, err := ReadRuneMatrix(filename)
+	if err != nil {
+		return nil, err
+	}
+	var result [][]int
+	for _, line := range runes {
+		asInts, err := RuneSliceToInt(line)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, asInts)
+	}
+	return result, nil
 }
 
 func StringSliceToInt(strOfInts []string) ([]int, error) {

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strings"
 
@@ -25,7 +26,12 @@ func (t *today) ReadInput(filename string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return shared.StringSliceToInt(strings.Split(string(text), " "))
+	intSlice, err := shared.StringSliceToInt(strings.Split(string(text), " "))
+	var result []uint64
+	for _, val := range intSlice {
+		result = append(result, uint64(val))
+	}
+	return result, nil
 }
 
 func (t *today) Part1(input any) (int, error) {
@@ -37,32 +43,45 @@ func (t *today) Part2(input any) (int, error) {
 }
 
 func implementation(input any, part int) (int, error) {
-	stones, ok := input.([]int)
+	stones, ok := input.([]uint64)
 	if !ok {
 		return -1, fmt.Errorf("unexpected type for input %T", input)
 	}
 	var blinks int
-	if part == 1 {
-		blinks = 2
+	switch part {
+	case 1:
+		blinks = 25
+	case 2:
+		blinks = 75
 	}
-	for range blinks {
-		var newStones []int
+	m := map[int]int{}
+	for i := 0; i < blinks; i++ {
+		var newStones []uint64
 		for _, stone := range stones {
-			// apparently you can get the number of digits in a number with floor(1+log(n))
 			if stone == 0 {
 				newStones = append(newStones, 1)
 			} else if firstHalf, secondHalf, ok := splitDigits(stone); ok {
 				newStones = append(newStones, firstHalf, secondHalf)
 			} else {
 				// otherwise...
-				newStones = append(newStones, stone*2024)
+				newStones = append(newStones, uint64(stone)*2024)
 			}
 		}
 		stones = newStones
+		m[i] = len(newStones)
+		fmt.Printf("------STONE DELTA %v-------\n", m[i]-m[i-1])
 	}
 	return len(stones), nil
 }
 
-func splitDigits(value int) (int, int, bool) {
-	fmt.Printf("NUM DIGITS %v STONE %v\n", numDigits, stone)
+func splitDigits(stone uint64) (uint64, uint64, bool) {
+	// apparently you can get the number of digits in a number with floor(1+log(n))
+	numDigits := int(math.Floor(1 + math.Log10(float64(stone))))
+	if numDigits%2 != 0 {
+		return 0, 0, false
+	}
+	midpoint := numDigits / 2
+	firstHalf := stone / uint64(math.Pow(10, float64(midpoint)))
+	secondHalf := stone - firstHalf*uint64(math.Pow(10, float64(midpoint)))
+	return firstHalf, secondHalf, true
 }

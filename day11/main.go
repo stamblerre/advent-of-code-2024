@@ -26,12 +26,7 @@ func (t *today) ReadInput(filename string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	intSlice, err := shared.StringSliceToInt(strings.Split(string(text), " "))
-	var result []uint64
-	for _, val := range intSlice {
-		result = append(result, uint64(val))
-	}
-	return result, nil
+	return shared.StringSliceToInt(strings.Split(string(text), " "))
 }
 
 func (t *today) Part1(input any) (int, error) {
@@ -43,7 +38,7 @@ func (t *today) Part2(input any) (int, error) {
 }
 
 func implementation(input any, part int) (int, error) {
-	stones, ok := input.([]uint64)
+	stones, ok := input.([]int)
 	if !ok {
 		return -1, fmt.Errorf("unexpected type for input %T", input)
 	}
@@ -54,34 +49,41 @@ func implementation(input any, part int) (int, error) {
 	case 2:
 		blinks = 75
 	}
-	m := map[int]int{}
-	for i := 0; i < blinks; i++ {
-		var newStones []uint64
-		for _, stone := range stones {
+	// stone number -> # times seen
+	cache := map[int]int{}
+	for _, stone := range stones {
+		cache[stone]++
+	}
+	for range blinks {
+		newStones := map[int]int{}
+		for stone, count := range cache {
 			if stone == 0 {
-				newStones = append(newStones, 1)
+				newStones[1] += count
 			} else if firstHalf, secondHalf, ok := splitDigits(stone); ok {
-				newStones = append(newStones, firstHalf, secondHalf)
+				newStones[firstHalf] += count
+				newStones[secondHalf] += count
 			} else {
-				// otherwise...
-				newStones = append(newStones, uint64(stone)*2024)
+				newStones[stone*2024] += count
+
 			}
 		}
-		stones = newStones
-		m[i] = len(newStones)
-		fmt.Printf("------STONE DELTA %v-------\n", m[i]-m[i-1])
+		cache = newStones
 	}
-	return len(stones), nil
+	result := 0
+	for _, count := range cache {
+		result += count
+	}
+	return result, nil
 }
 
-func splitDigits(stone uint64) (uint64, uint64, bool) {
+func splitDigits(stone int) (int, int, bool) {
 	// apparently you can get the number of digits in a number with floor(1+log(n))
 	numDigits := int(math.Floor(1 + math.Log10(float64(stone))))
 	if numDigits%2 != 0 {
 		return 0, 0, false
 	}
 	midpoint := numDigits / 2
-	firstHalf := stone / uint64(math.Pow(10, float64(midpoint)))
-	secondHalf := stone - firstHalf*uint64(math.Pow(10, float64(midpoint)))
+	firstHalf := stone / int(math.Pow(10, float64(midpoint)))
+	secondHalf := stone - firstHalf*int(math.Pow(10, float64(midpoint)))
 	return firstHalf, secondHalf, true
 }

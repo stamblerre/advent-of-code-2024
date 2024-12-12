@@ -78,7 +78,7 @@ func implementation(input any, part int) (int, error) {
 			if trailhead == nil {
 				trailhead = n
 			}
-			for _, delta := range shared.DirectionalDelta() {
+			for _, delta := range shared.CardinalDirectionDelta() {
 				next := n.Coordinate.Add(&delta)
 
 				if !shared.InBounds(matrix, next) {

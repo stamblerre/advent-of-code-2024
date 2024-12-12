@@ -87,15 +87,32 @@ const (
 	Down
 	Left
 	Up
+	DiagonalUpRight
+	DiagonalUpLeft
+	DiagonalDownRight
+	DiagonalDownLeft
 )
 
-func DirectionalDelta() map[Direction]CoordinateDelta {
+// TODO(stamblerre): redo this
+
+func CardinalDirectionDelta() map[Direction]CoordinateDelta {
 	return map[Direction]CoordinateDelta{
 		Right: {DeltaI: 0, DeltaJ: 1},
 		Down:  {DeltaI: 1, DeltaJ: 0},
 		Left:  {DeltaI: 0, DeltaJ: -1},
 		Up:    {DeltaI: -1, DeltaJ: 0},
 	}
+}
+
+func DirectionDelta() map[Direction]CoordinateDelta {
+	m := CardinalDirectionDelta()
+
+	m[DiagonalUpRight] = CoordinateDelta{DeltaI: 1, DeltaJ: 1}
+	m[DiagonalDownRight] = CoordinateDelta{DeltaI: 1, DeltaJ: -1}
+	m[DiagonalDownLeft] = CoordinateDelta{DeltaI: -1, DeltaJ: 1}
+	m[DiagonalUpLeft] = CoordinateDelta{DeltaI: -1, DeltaJ: -1}
+
+	return m
 }
 
 // reading files

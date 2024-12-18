@@ -3,6 +3,7 @@ package shared
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -35,6 +36,34 @@ func Run(d Day, filename string) (int, int, error) {
 
 type Coordinate struct {
 	I, J int
+}
+
+func SortedCoordinates(coordinates map[Coordinate]struct{}) []Coordinate {
+	var result []Coordinate
+	for c := range coordinates {
+		result = append(result, c)
+	}
+	sort.Slice(result, func(a, b int) bool {
+		if result[a].I == result[b].I {
+			return result[a].J < result[b].J
+		}
+		return result[a].I < result[b].I
+	})
+	return result
+}
+
+func (c1 *Coordinate) Neighbors(c2 *Coordinate) bool {
+	for _, d := range CardinalDirectionDelta() {
+		neighbor := c1.Add(&d)
+		if neighbor.equals(c2) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c1 *Coordinate) equals(c2 *Coordinate) bool {
+	return c1.I == c2.I && c1.J == c2.J
 }
 
 type CoordinateDelta struct {
@@ -76,7 +105,7 @@ func InBounds(matrix any, coord *Coordinate) bool {
 	case [][]int:
 		return coord.I >= 0 && coord.J >= 0 && coord.I < len(matrix) && coord.J < len(matrix[coord.I])
 	default:
-		return false
+		panic(fmt.Sprintf("unexpected type %T for matrix", matrix))
 	}
 }
 

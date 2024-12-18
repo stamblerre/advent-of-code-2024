@@ -12,14 +12,9 @@ func TestToday(t *testing.T) {
 		expected1 int
 		expected2 int
 	}{
-		// {
-		// 	filename:  "testdata/small_test_input.txt",
-		// 	expected1: 140,
-		// 	expected2: -1,
-		// },
 		{
 			filename:  "testdata/test_input.txt",
-			expected1: 1930,
+			expected1: -1,
 			expected2: -1,
 		},
 	} {
@@ -31,10 +26,8 @@ func TestToday(t *testing.T) {
 		if got1 != tc.expected1 {
 			t.Fatalf("expected %d, got %d", tc.expected1, got1)
 		}
-		if tc.expected2 != -1 {
-			if got2 != tc.expected2 {
-				t.Fatalf("expected %d, got %d", tc.expected2, got2)
-			}
+		if got2 != tc.expected2 {
+			t.Fatalf("expected %d, got %d", tc.expected2, got2)
 		}
 	}
 }

@@ -105,7 +105,8 @@ func patrol(start *shared.Coordinate, input [][]rune) (int, bool, error) {
 			return -1, false, err
 		}
 		for _, r := range rotations {
-			delta := guardToDirection(r)
+			dir := shared.CaratToDirection(r)
+			delta := shared.DirectionToDelta(dir)
 			next := guard.Add(delta)
 
 			// Trying to go outside the mapped area, so you're done.
@@ -128,21 +129,6 @@ func isGuard(r rune) bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func guardToDirection(r rune) *shared.CoordinateDelta {
-	switch r {
-	case '^':
-		return &shared.CoordinateDelta{DeltaI: -1, DeltaJ: 0}
-	case '>':
-		return &shared.CoordinateDelta{DeltaI: 0, DeltaJ: 1}
-	case 'v':
-		return &shared.CoordinateDelta{DeltaI: 1, DeltaJ: 0}
-	case '<':
-		return &shared.CoordinateDelta{DeltaI: 0, DeltaJ: -1}
-	default:
-		return nil
 	}
 }
 

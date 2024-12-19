@@ -95,27 +95,27 @@ func implementation(input any, part int) (int, error) {
 
 func (r *robot) move(seconds, maxX, maxY int) {
 	delta := r.velocity.Multiply(seconds)
-	newPosition := r.position.Add(delta)
+	newPosition := r.position.Add(*delta)
 	for newPosition.I >= maxY {
-		newPosition = newPosition.Add(&shared.CoordinateDelta{
+		newPosition = newPosition.Add(shared.CoordinateDelta{
 			DeltaJ: 0,
 			DeltaI: -maxY,
 		})
 	}
 	for newPosition.I < 0 {
-		newPosition = newPosition.Add(&shared.CoordinateDelta{
+		newPosition = newPosition.Add(shared.CoordinateDelta{
 			DeltaJ: 0,
 			DeltaI: maxY,
 		})
 	}
 	for newPosition.J >= maxX {
-		newPosition = newPosition.Add(&shared.CoordinateDelta{
+		newPosition = newPosition.Add(shared.CoordinateDelta{
 			DeltaJ: -maxX,
 			DeltaI: 0,
 		})
 	}
 	for newPosition.J < 0 {
-		newPosition = newPosition.Add(&shared.CoordinateDelta{
+		newPosition = newPosition.Add(shared.CoordinateDelta{
 			DeltaJ: maxX,
 			DeltaI: 0,
 		})

@@ -77,9 +77,9 @@ func helper(input any, includeHarmonics bool) (int, error) {
 				for i, antenna := range []*antenna{antenna1, antenna2} {
 					var antinode *shared.Coordinate
 					if i == 0 {
-						antinode = antenna.Sub(delta)
+						antinode = antenna.Sub(*delta)
 					} else {
-						antinode = antenna.Add(delta)
+						antinode = antenna.Add(*delta)
 					}
 					if !shared.InBounds(matrix, antinode) {
 						continue
@@ -92,7 +92,7 @@ func helper(input any, includeHarmonics bool) (int, error) {
 				delta := antenna1.Delta(&antenna2.Coordinate)
 				antinode := &antenna1.Coordinate
 				for {
-					antinode = antinode.Sub(delta)
+					antinode = antinode.Sub(*delta)
 					if !shared.InBounds(matrix, antinode) {
 						break
 					}
@@ -101,7 +101,7 @@ func helper(input any, includeHarmonics bool) (int, error) {
 				// now add to antenna2
 				antinode = &antenna2.Coordinate
 				for {
-					antinode = antinode.Add(delta)
+					antinode = antinode.Add(*delta)
 					if !shared.InBounds(matrix, antinode) {
 						break
 					}

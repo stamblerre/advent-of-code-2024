@@ -147,7 +147,7 @@ func (r *region) perimeter() int {
 	for coord := range r.coordinates {
 		plant := (*r.matrix)[coord.I][coord.J]
 		for _, delta := range shared.CardinalDirectionDelta() {
-			dir := coord.Add(&delta)
+			dir := coord.Add(delta)
 			if !shared.InBounds(*r.matrix, dir) {
 				continue
 			}
@@ -166,7 +166,7 @@ func (r *region) sides() int {
 	for coord := range r.coordinates {
 		plant := (*r.matrix)[coord.I][coord.J]
 		for _, delta := range shared.CardinalDirectionDelta() {
-			dir := coord.Add(&delta)
+			dir := coord.Add(delta)
 			if !shared.InBounds(*r.matrix, dir) {
 				continue
 			}

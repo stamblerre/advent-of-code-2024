@@ -54,8 +54,7 @@ func SortedCoordinates(coordinates map[Coordinate]struct{}) []Coordinate {
 
 func (c1 *Coordinate) Neighbors(c2 *Coordinate) bool {
 	for _, d := range CardinalDirectionDelta() {
-		neighbor := c1.Add(&d)
-		if neighbor.equals(c2) {
+		if c1.Add(d).equals(c2) {
 			return true
 		}
 	}
@@ -77,14 +76,14 @@ func (d *CoordinateDelta) Multiply(i int) *CoordinateDelta {
 	}
 }
 
-func (c *Coordinate) Add(d *CoordinateDelta) *Coordinate {
+func (c *Coordinate) Add(d CoordinateDelta) *Coordinate {
 	return &Coordinate{
 		I: c.I + d.DeltaI,
 		J: c.J + d.DeltaJ,
 	}
 }
 
-func (c *Coordinate) Sub(d *CoordinateDelta) *Coordinate {
+func (c *Coordinate) Sub(d CoordinateDelta) *Coordinate {
 	return &Coordinate{
 		I: c.I - d.DeltaI,
 		J: c.J - d.DeltaJ,
@@ -112,7 +111,9 @@ func InBounds(matrix any, coord *Coordinate) bool {
 type Direction int
 
 const (
-	Right Direction = iota
+	Unknown Direction = iota
+
+	Right
 	Down
 	Left
 	Up
@@ -125,23 +126,29 @@ const (
 // TODO(stamblerre): redo this
 
 func CardinalDirectionDelta() map[Direction]CoordinateDelta {
-	return map[Direction]CoordinateDelta{
-		Right: {DeltaI: 0, DeltaJ: 1},
-		Down:  {DeltaI: 1, DeltaJ: 0},
-		Left:  {DeltaI: 0, DeltaJ: -1},
-		Up:    {DeltaI: -1, DeltaJ: 0},
-	}
+	return cardinalDirectionDeltaMap
 }
 
-func DirectionDelta() map[Direction]CoordinateDelta {
-	m := CardinalDirectionDelta()
+var caratToDirection = map[rune]Direction{
+	'^': Up,
+	'>': Right,
+	'v': Down,
+	'<': Left,
+}
 
-	m[DiagonalUpRight] = CoordinateDelta{DeltaI: 1, DeltaJ: 1}
-	m[DiagonalDownRight] = CoordinateDelta{DeltaI: 1, DeltaJ: -1}
-	m[DiagonalDownLeft] = CoordinateDelta{DeltaI: -1, DeltaJ: 1}
-	m[DiagonalUpLeft] = CoordinateDelta{DeltaI: -1, DeltaJ: -1}
+var cardinalDirectionDeltaMap = map[Direction]CoordinateDelta{
+	Right: {DeltaI: 0, DeltaJ: 1},
+	Down:  {DeltaI: 1, DeltaJ: 0},
+	Left:  {DeltaI: 0, DeltaJ: -1},
+	Up:    {DeltaI: -1, DeltaJ: 0},
+}
 
-	return m
+func CaratToDirection(r rune) Direction {
+	return caratToDirection[r]
+}
+
+func DirectionToDelta(dir Direction) CoordinateDelta {
+	return cardinalDirectionDeltaMap[dir]
 }
 
 // reading files
@@ -151,6 +158,10 @@ func ReadRuneMatrix(filename string) ([][]rune, error) {
 	if err != nil {
 		return nil, err
 	}
+	return TextToRuneMatrix(string(text))
+}
+
+func TextToRuneMatrix(text string) ([][]rune, error) {
 	// convert to 2D array
 	var input [][]rune
 	for i, line := range strings.Split(string(text), "\n") {

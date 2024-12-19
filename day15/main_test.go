@@ -13,10 +13,15 @@ func TestToday(t *testing.T) {
 		expected2 int
 	}{
 		{
-			filename:  "testdata/test_input.txt",
+			filename:  "testdata/small_test_input.txt",
 			expected1: -1,
 			expected2: -1,
 		},
+		// {
+		// 	filename:  "testdata/test_input.txt",
+		// 	expected1: -1,
+		// 	expected2: -1,
+		// },
 	} {
 		day := &today{}
 		got1, got2, err := shared.Run(day, tc.filename)
@@ -26,8 +31,10 @@ func TestToday(t *testing.T) {
 		if got1 != tc.expected1 {
 			t.Fatalf("expected %d, got %d", tc.expected1, got1)
 		}
-		if got2 != tc.expected2 {
-			t.Fatalf("expected %d, got %d", tc.expected2, got2)
+		if tc.expected2 != -1 {
+			if got2 != tc.expected2 {
+				t.Fatalf("expected %d, got %d", tc.expected2, got2)
+			}
 		}
 	}
 }

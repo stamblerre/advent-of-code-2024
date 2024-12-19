@@ -65,7 +65,15 @@ func implementation(input any, part int) (int, error) {
 	}
 	result := 0
 	for _, r := range knownRegions {
-		result += r.perimeter() * r.area()
+		switch part {
+		case 1:
+			result += r.perimeter() * r.area()
+		case 2:
+			result += r.sides() * r.area()
+		default:
+			panic(fmt.Sprintf("unexpected part %v", part))
+		}
+
 	}
 	return result, nil
 }
@@ -134,6 +142,25 @@ func (r *region) plant() string {
 }
 
 func (r *region) perimeter() int {
+	perim := 4 * len(r.coordinates)
+	// a side is touching if on the left & right of it there is the same region
+	for coord := range r.coordinates {
+		plant := (*r.matrix)[coord.I][coord.J]
+		for _, delta := range shared.CardinalDirectionDelta() {
+			dir := coord.Add(&delta)
+			if !shared.InBounds(*r.matrix, dir) {
+				continue
+			}
+			dirPlant := (*r.matrix)[dir.I][dir.J]
+			if dirPlant == plant {
+				perim -= 1
+			}
+		}
+	}
+	return perim
+}
+
+func (r *region) sides() int {
 	perim := 4 * len(r.coordinates)
 	// a side is touching if on the left & right of it there is the same region
 	for coord := range r.coordinates {

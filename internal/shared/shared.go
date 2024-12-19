@@ -231,3 +231,7 @@ func RuneSliceString(s []rune) []string {
 	}
 	return strSlice
 }
+
+type Point struct {
+	X, Y int
+}

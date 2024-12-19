@@ -61,10 +61,8 @@ func implementation(input any, part int) (int, error) {
 	var knownRegions []*region
 	for _, region := range letterRegions {
 		split := splitRegions(region)
-		fmt.Printf("REGION %v got SPLIT INTO %v\n", region.plant(), len(split))
 		knownRegions = append(knownRegions, split...)
 	}
-	fmt.Printf("KNOWN REGIONS: %v\n", len(knownRegions))
 	result := 0
 	for _, r := range knownRegions {
 		result += r.perimeter() * r.area()
@@ -72,29 +70,43 @@ func implementation(input any, part int) (int, error) {
 	return result, nil
 }
 
-func splitRegions(r *region) []*region {
-	sorted := shared.SortedCoordinates(r.coordinates)
+func splitRegions(originalRegion *region) []*region {
+	sorted := shared.SortedCoordinates(originalRegion.coordinates)
 	currentRegion := &region{
 		coordinates: map[shared.Coordinate]struct{}{},
-		matrix:      r.matrix,
+		matrix:      originalRegion.matrix,
 	}
 	var regions []*region
-	fmt.Printf("SORTED FOR %v - %v\n", r.plant(), sorted)
-	for _, coord := range sorted {
-		if currentRegion.mergeable(coord) {
-			currentRegion.coordinates[coord] = struct{}{}
-		} else {
+	for len(sorted) > 0 {
+		index := currentRegion.getNextMergeable(sorted)
+		if index == -1 {
 			regions = append(regions, currentRegion)
 			currentRegion = &region{
 				coordinates: map[shared.Coordinate]struct{}{},
-				matrix:      r.matrix,
+				matrix:      originalRegion.matrix,
 			}
+			continue
 		}
+		coord := sorted[index]
+		sorted = append(sorted[0:index], sorted[index+1:]...)
+		currentRegion.coordinates[coord] = struct{}{}
 	}
-	if len(regions) == 0 {
+	if len(currentRegion.coordinates) > 0 {
 		regions = append(regions, currentRegion)
 	}
 	return regions
+}
+
+func (r *region) getNextMergeable(coords []shared.Coordinate) int {
+	if len(r.coordinates) == 0 {
+		return 0
+	}
+	for i, coord := range coords {
+		if r.mergeable(coord) {
+			return i
+		}
+	}
+	return -1
 }
 
 func (r *region) mergeable(coord shared.Coordinate) bool {

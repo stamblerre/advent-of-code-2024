@@ -60,28 +60,46 @@ func implementation(input any, part int) (int, error) {
 		return -1, fmt.Errorf("unable to find start of robot")
 	}
 	for _, move := range in.moves {
+		fmt.Printf("---------------MOVE: %v------------------\n", string(move))
 		dir := shared.CaratToDirection(move)
 		if dir == shared.Unknown {
 			panic(fmt.Sprintf("unknown direction %v", move))
 		}
 		delta := shared.DirectionToDelta(dir)
 		nextPos := pos.Add(delta)
-		next := in.grid[pos.I][pos.J]
+		next := in.grid[nextPos.I][nextPos.J]
 		switch next {
 		case 'O':
 			// push boxes
-			if pushed := pushBoxes(in.grid, nextPos, dir); pushed {
+			if pushed := pushBoxes(&in.grid, nextPos, delta); pushed {
+				fmt.Println("PUSHED!")
 				pos = nextPos
+			} else {
+				fmt.Println("I HATE TO PUSH")
 			}
 		case '#':
 			// do nothing
+			fmt.Println("nothing")
 		case '.':
+			// move the robot
+			in.grid[pos.I][pos.J] = '.'
+			in.grid[nextPos.I][nextPos.J] = '@'
 			pos = nextPos
+			fmt.Println("move da robot")
 		}
 		shared.PrintRuneMatrix(in.grid)
-		fmt.Printf("---------------------------------\n")
 	}
-	return -1, nil
+	gps := 0
+	for i, line := range in.grid {
+		for j, r := range line {
+			// not a box
+			if r != 'O' {
+				continue
+			}
+			gps += 100*i + j
+		}
+	}
+	return gps, nil
 }
 
 func findRobot(grid [][]rune) *shared.Coordinate {
@@ -98,6 +116,49 @@ func findRobot(grid [][]rune) *shared.Coordinate {
 	return nil
 }
 
-func pushBoxes(grid [][]rune, boxPos *shared.Coordinate, dir shared.Direction) bool {
-	return false
+func pushBoxes(grid *[][]rune, boxPos *shared.Coordinate, delta shared.CoordinateDelta) bool {
+	fmt.Println("Pushing boxes...")
+	var empty *shared.Coordinate
+	pos := boxPos
+	for {
+		next := pos.Add(delta)
+		if !shared.InBounds(*grid, next) {
+			break
+		}
+		value := (*grid)[next.I][next.J]
+		if value == '#' {
+			// reached the end...
+			break
+		} else if value == '.' {
+			//  found an empty spot
+			empty = next
+			break
+		} else if value == 'O' {
+			pos = next
+		} else {
+			panic(fmt.Sprintf("unexpected value %v", string(value)))
+		}
+	}
+	// no space to push, just return
+	if empty == nil {
+		return false
+	}
+	fmt.Printf("I FOUND AN EMPTY PLACE %v\n", empty)
+	pos = empty
+	for pos != boxPos {
+		prevPos := pos.Sub(delta)
+		if !shared.InBounds(*grid, prevPos) {
+			break
+		}
+		prevPosValue := (*grid)[prevPos.I][prevPos.J]
+		if prevPosValue == '#' {
+			break // don't move the walls
+		}
+		fmt.Printf("PREV POS VALUE %v\n", string(prevPosValue))
+		posValue := (*grid)[pos.I][pos.J]
+		(*grid)[pos.I][pos.J] = prevPosValue
+		(*grid)[prevPos.I][prevPos.J] = posValue
+		pos = prevPos
+	}
+	return true
 }

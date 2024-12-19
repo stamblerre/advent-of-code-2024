@@ -60,7 +60,6 @@ func implementation(input any, part int) (int, error) {
 		return -1, fmt.Errorf("unable to find start of robot")
 	}
 	for _, move := range in.moves {
-		fmt.Printf("---------------MOVE: %v------------------\n", string(move))
 		dir := shared.CaratToDirection(move)
 		if dir == shared.Unknown {
 			panic(fmt.Sprintf("unknown direction %v", move))
@@ -68,26 +67,26 @@ func implementation(input any, part int) (int, error) {
 		delta := shared.DirectionToDelta(dir)
 		nextPos := pos.Add(delta)
 		next := in.grid[nextPos.I][nextPos.J]
+		moveRobot := func() {
+			in.grid[pos.I][pos.J] = '.'
+			in.grid[nextPos.I][nextPos.J] = '@'
+			pos = nextPos
+		}
 		switch next {
 		case 'O':
 			// push boxes
 			if pushed := pushBoxes(&in.grid, nextPos, delta); pushed {
-				fmt.Println("PUSHED!")
-				pos = nextPos
-			} else {
-				fmt.Println("I HATE TO PUSH")
+				moveRobot()
 			}
 		case '#':
 			// do nothing
-			fmt.Println("nothing")
 		case '.':
 			// move the robot
-			in.grid[pos.I][pos.J] = '.'
-			in.grid[nextPos.I][nextPos.J] = '@'
-			pos = nextPos
-			fmt.Println("move da robot")
+			moveRobot()
 		}
-		shared.PrintRuneMatrix(in.grid)
+		if countRobots(in.grid) > 1 {
+			os.Exit(1)
+		}
 	}
 	gps := 0
 	for i, line := range in.grid {
@@ -116,10 +115,9 @@ func findRobot(grid [][]rune) *shared.Coordinate {
 	return nil
 }
 
-func pushBoxes(grid *[][]rune, boxPos *shared.Coordinate, delta shared.CoordinateDelta) bool {
-	fmt.Println("Pushing boxes...")
+func pushBoxes(grid *[][]rune, newRobotPos *shared.Coordinate, delta shared.CoordinateDelta) bool {
 	var empty *shared.Coordinate
-	pos := boxPos
+	pos := newRobotPos
 	for {
 		next := pos.Add(delta)
 		if !shared.InBounds(*grid, next) {
@@ -135,6 +133,8 @@ func pushBoxes(grid *[][]rune, boxPos *shared.Coordinate, delta shared.Coordinat
 			break
 		} else if value == 'O' {
 			pos = next
+		} else if value == '@' {
+			panic(fmt.Sprintf("found robot at %v, newRobotPos is %v", next, newRobotPos))
 		} else {
 			panic(fmt.Sprintf("unexpected value %v", string(value)))
 		}
@@ -143,9 +143,8 @@ func pushBoxes(grid *[][]rune, boxPos *shared.Coordinate, delta shared.Coordinat
 	if empty == nil {
 		return false
 	}
-	fmt.Printf("I FOUND AN EMPTY PLACE %v\n", empty)
 	pos = empty
-	for pos != boxPos {
+	for !pos.Equals(newRobotPos) {
 		prevPos := pos.Sub(delta)
 		if !shared.InBounds(*grid, prevPos) {
 			break
@@ -154,11 +153,31 @@ func pushBoxes(grid *[][]rune, boxPos *shared.Coordinate, delta shared.Coordinat
 		if prevPosValue == '#' {
 			break // don't move the walls
 		}
-		fmt.Printf("PREV POS VALUE %v\n", string(prevPosValue))
+		if prevPosValue == '@' {
+			// i saw the robot...?
+			panic(fmt.Sprintf("found the robot at %v", prevPosValue))
+		}
 		posValue := (*grid)[pos.I][pos.J]
+		if posValue == '@' {
+			// i saw the robot...?
+			panic(fmt.Sprintf("found the robot at %v", posValue))
+		}
 		(*grid)[pos.I][pos.J] = prevPosValue
 		(*grid)[prevPos.I][prevPos.J] = posValue
 		pos = prevPos
 	}
+
 	return true
+}
+
+func countRobots(grid [][]rune) int {
+	seen := 0
+	for _, line := range grid {
+		for _, r := range line {
+			if r == '@' {
+				seen++
+			}
+		}
+	}
+	return seen
 }

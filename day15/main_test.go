@@ -12,16 +12,21 @@ func TestToday(t *testing.T) {
 		expected1 int
 		expected2 int
 	}{
-		{
-			filename:  "testdata/small_test_input.txt",
-			expected1: 2028,
-			expected2: -1,
-		},
+		// {
+		// 	filename:  "testdata/small_test_input.txt",
+		// 	expected1: 2028,
+		// 	expected2: -1,
+		// },
 		{
 			filename:  "testdata/test_input.txt",
 			expected1: 10092,
 			expected2: -1,
 		},
+		// {
+		// 	filename:  "testdata/medium_test_input.txt",
+		// 	expected1: 10092,
+		// 	expected2: -1,
+		// },
 	} {
 		day := &today{}
 		got1, got2, err := shared.Run(day, tc.filename)

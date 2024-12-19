@@ -54,14 +54,14 @@ func SortedCoordinates(coordinates map[Coordinate]struct{}) []Coordinate {
 
 func (c1 *Coordinate) Neighbors(c2 *Coordinate) bool {
 	for _, d := range CardinalDirectionDelta() {
-		if c1.Add(d).equals(c2) {
+		if c1.Add(d).Equals(c2) {
 			return true
 		}
 	}
 	return false
 }
 
-func (c1 *Coordinate) equals(c2 *Coordinate) bool {
+func (c1 *Coordinate) Equals(c2 *Coordinate) bool {
 	return c1.I == c2.I && c1.J == c2.J
 }
 
@@ -239,7 +239,7 @@ func StringOfStringMatrix(matrix [][]string) string {
 
 func PrintRuneMatrix(matrix [][]rune) {
 	for _, line := range matrix {
-		fmt.Println(RuneSliceString(line))
+		fmt.Println(strings.Join(RuneSliceString(line), ""))
 	}
 }
 

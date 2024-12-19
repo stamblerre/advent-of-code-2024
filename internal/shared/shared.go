@@ -218,6 +218,14 @@ func sliceToInt(strOfInts []any) ([]int, error) {
 	return result, nil
 }
 
+func StringOfStringMatrix(matrix [][]string) string {
+	var result strings.Builder
+	for _, line := range matrix {
+		result.WriteString(fmt.Sprintf("%v\n", line))
+	}
+	return result.String()
+}
+
 func PrintRuneMatrix(matrix [][]rune) {
 	for _, line := range matrix {
 		fmt.Println(RuneSliceString(line))

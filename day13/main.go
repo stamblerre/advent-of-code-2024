@@ -67,7 +67,6 @@ func (t *today) ReadInput(filename string) (any, error) {
 					return nil, err
 				}
 				machine.prize = shared.Point{X: x, Y: y}
-				machine.prizePart2 = shared.Point{X: x + extraOffset, Y: y + extraOffset}
 			} else {
 				panic(fmt.Sprintf("not sure what to do with line: %q", line))
 			}
@@ -92,7 +91,7 @@ func implementation(input any, part int) (int, error) {
 	}
 	tokens := 0
 	for _, m := range machines {
-		cost := m.solve()
+		cost := m.solve(part)
 		if cost < 0 {
 			continue
 		}
@@ -104,9 +103,7 @@ func implementation(input any, part int) (int, error) {
 type machine struct {
 	buttonA shared.Point
 	buttonB shared.Point
-
-	prize      shared.Point
-	prizePart2 shared.Point
+	prize   shared.Point
 }
 
 func (m *machine) String() string {
@@ -116,23 +113,21 @@ Prize: X=%d, Y=%d
 `, int(m.buttonA.X), int(m.buttonA.Y), int(m.buttonB.X), int(m.buttonB.Y), int(m.prize.X), int(m.prize.Y))
 }
 
-func (m *machine) solve() int {
-	options := make([][]int, 100)
-	minCost := -1
-	for aPresses := range len(options) {
-		// initialize options
-		options[aPresses] = make([]int, 100) // not great but fine
-		for bPresses := range len(options[aPresses]) {
-			solvedX := aPresses*m.buttonA.X+bPresses*m.buttonB.X == m.prize.X
-			solvedY := aPresses*m.buttonA.Y+bPresses*m.buttonB.Y == m.prize.Y
-			if !solvedX || !solvedY {
-				continue
-			}
-			options[aPresses][bPresses] = aPresses*aCost + bPresses*bCost
-			if minCost == -1 || options[aPresses][bPresses] < minCost {
-				minCost = options[aPresses][bPresses]
-			}
-		}
+func (m *machine) solve(part int) int {
+	prizeX := m.prize.X
+	prizeY := m.prize.Y
+	if part == 2 {
+		prizeX += extraOffset
+		prizeY += extraOffset
 	}
-	return minCost
+	aPresses := (m.buttonB.Y*prizeX - m.buttonB.X*prizeY) / (m.buttonB.Y*m.buttonA.X - m.buttonA.Y*m.buttonB.X)
+	bPresses := (m.buttonA.Y*prizeX - m.buttonA.X*prizeY) / (m.buttonA.Y*m.buttonB.X - m.buttonB.Y*m.buttonA.X)
+
+	solnX := aPresses*m.buttonA.X + bPresses*m.buttonB.X
+	solnY := aPresses*m.buttonA.Y + bPresses*m.buttonB.Y
+
+	if solnX == prizeX && solnY == prizeY {
+		return aPresses*aCost + bPresses*bCost
+	}
+	return -1
 }

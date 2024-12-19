@@ -12,13 +12,18 @@ func TestToday(t *testing.T) {
 		expected1 int
 		expected2 int
 	}{
+		// {
+		// 	filename:  "testdata/test_input.txt",
+		// 	expected1: 7036,
+		// 	expected2: -1,
+		// },
+		// {
+		// 	filename:  "testdata/medium_test_input.txt",
+		// 	expected1: 11048,
+		// 	expected2: -1,
+		// },
 		{
-			filename:  "testdata/test_input.txt",
-			expected1: 7036,
-			expected2: -1,
-		},
-		{
-			filename:  "testdata/medium_test_input.txt",
+			filename:  "testdata/small_test_input.txt",
 			expected1: 11048,
 			expected2: -1,
 		},

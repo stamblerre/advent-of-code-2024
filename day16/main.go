@@ -38,20 +38,17 @@ type node struct {
 	// keep track of all the seen coordinates along the path
 	seen map[shared.Coordinate]struct{}
 
-	moveType // maybe...
+	// cost of the move...
+	moveCost int
 }
 
 func (n *node) String() string {
 	return fmt.Sprintf("%v - %s", n.Coordinate, n.direction)
 }
 
-type moveType int
-
 const (
-	unknown moveType = iota
-
-	step
-	rotate
+	stepCost     = 1
+	rotationCost = 1000
 )
 
 func implementation(input any, part int) (int, error) {
@@ -62,19 +59,40 @@ func implementation(input any, part int) (int, error) {
 	start := shared.FindRune(matrix, 'S')
 	end := shared.FindRune(matrix, 'E')
 
-	stack := []*node{{
+	queue := []*node{{
 		Coordinate: *start,
 		direction:  shared.Right,
 	}}
-	var paths []*node // pointer to the end
-	for len(stack) > 0 {
-		last := len(stack) - 1
-		n := stack[last]
-		stack = stack[:last]
+	// i -> j -> min cost
+	cost := map[int]map[int]int{
+		start.I: {start.J: 0},
+	}
+	for len(queue) > 0 {
+		n := queue[0]
+		queue = queue[1:]
+
+		// check that you can walk here
+		value := matrix[n.I][n.J]
+		if value == '#' {
+			continue
+		}
+
+		// update the cost
+		if _, ok := cost[n.I]; !ok {
+			cost[n.I] = map[int]int{}
+		}
+		var newCost int
+		if n.parent != nil {
+			newCost += cost[n.parent.I][n.parent.J]
+		}
+		newCost += n.moveCost
+
+		if minCost, ok := cost[n.I][n.J]; !ok || newCost < minCost {
+			cost[n.I][n.J] = newCost
+		}
 
 		// reached the end!
 		if n.Coordinate.Equals(end) {
-			paths = append(paths, n)
 			continue
 		}
 
@@ -82,10 +100,10 @@ func implementation(input any, part int) (int, error) {
 		//
 		// (1) go forward, if possible
 		if next := n.AddDirection(n.direction); shared.InBounds(matrix, next) && !isWall(matrix, next) && !n.previouslySeen(next) {
-			stack = append(stack, &node{
+			queue = append(queue, &node{
 				direction:  n.direction,
 				parent:     n,
-				moveType:   step,
+				moveCost:   stepCost,
 				Coordinate: n.AddDirection(n.direction),
 				seen:       n.copySeenAndAdd(next),
 			})
@@ -93,47 +111,26 @@ func implementation(input any, part int) (int, error) {
 
 		// (2) turn clockwise or counterclockwise
 		// but don't turn if you've turned before...don't want to spin in circles
-		if n.moveType != rotate {
+		if n.moveCost <= stepCost {
 			// clockwise
-			stack = append(stack, &node{
-				direction:  n.direction.Clockwise(),
-				parent:     n,
-				moveType:   rotate,
-				Coordinate: n.Coordinate,
-			})
-
-			// counterclockwise
-			stack = append(stack, &node{
-				direction:  n.direction.CounterClockwise(),
-				parent:     n,
-				moveType:   rotate,
-				Coordinate: n.Coordinate,
-			})
-		}
-	}
-
-	// compute the cost of each path!
-	minCost := -1
-	for _, path := range paths {
-		node := path
-		cost := 0
-		if node.Coordinate != *end {
-			panic("how did you end on the wrong place??")
-		}
-		for node != nil {
-			switch node.moveType {
-			case step:
-				cost++
-			case rotate:
-				cost += 1000
+			for _, newDir := range []shared.Direction{
+				n.direction.Clockwise(),
+				n.direction.CounterClockwise(),
+			} {
+				newCoord := n.Coordinate.AddDirection(newDir)
+				if shared.InBounds(matrix, newCoord) {
+					queue = append(queue, &node{
+						direction:  newDir,
+						parent:     n,
+						moveCost:   rotationCost + stepCost,
+						Coordinate: newCoord,
+						seen:       n.copySeenAndAdd(newCoord),
+					})
+				}
 			}
-			node = node.parent
-		}
-		if minCost == -1 || cost < minCost {
-			minCost = cost
 		}
 	}
-	return minCost, nil
+	return cost[end.I][end.J], nil
 }
 
 func isWall(matrix [][]rune, pos shared.Coordinate) bool {

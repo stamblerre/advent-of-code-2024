@@ -102,17 +102,7 @@ func implementation(input any, part int) (int, error) {
 }
 
 func findRobot(grid [][]rune) *shared.Coordinate {
-	for i, line := range grid {
-		for j, r := range line {
-			if r == '@' {
-				return &shared.Coordinate{
-					I: i,
-					J: j,
-				}
-			}
-		}
-	}
-	return nil
+	return shared.FindRune(grid, '@')
 }
 
 func pushBoxes(grid *[][]rune, newRobotPos *shared.Coordinate, delta shared.CoordinateDelta) bool {
@@ -120,7 +110,7 @@ func pushBoxes(grid *[][]rune, newRobotPos *shared.Coordinate, delta shared.Coor
 	pos := newRobotPos
 	for {
 		next := pos.Add(delta)
-		if !shared.InBounds(*grid, next) {
+		if !shared.InBounds(*grid, *next) {
 			break
 		}
 		value := (*grid)[next.I][next.J]
@@ -146,7 +136,7 @@ func pushBoxes(grid *[][]rune, newRobotPos *shared.Coordinate, delta shared.Coor
 	pos = empty
 	for !pos.Equals(newRobotPos) {
 		prevPos := pos.Sub(delta)
-		if !shared.InBounds(*grid, prevPos) {
+		if !shared.InBounds(*grid, *prevPos) {
 			break
 		}
 		prevPosValue := (*grid)[prevPos.I][prevPos.J]

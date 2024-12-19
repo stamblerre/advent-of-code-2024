@@ -110,7 +110,7 @@ func patrol(start *shared.Coordinate, input [][]rune) (int, bool, error) {
 			next := guard.Add(delta)
 
 			// Trying to go outside the mapped area, so you're done.
-			if !shared.InBounds(input, next) {
+			if !shared.InBounds(input, *next) {
 				return len(visited), false, nil
 			}
 

@@ -81,7 +81,7 @@ func implementation(input any, part int) (int, error) {
 			for _, delta := range shared.CardinalDirectionDelta() {
 				next := n.Coordinate.Add(delta)
 
-				if !shared.InBounds(matrix, next) {
+				if !shared.InBounds(matrix, *next) {
 					continue
 				}
 

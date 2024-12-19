@@ -81,7 +81,7 @@ func helper(input any, includeHarmonics bool) (int, error) {
 					} else {
 						antinode = antenna.Add(*delta)
 					}
-					if !shared.InBounds(matrix, antinode) {
+					if !shared.InBounds(matrix, *antinode) {
 						continue
 					}
 					antinodes[*antinode] = struct{}{}
@@ -93,7 +93,7 @@ func helper(input any, includeHarmonics bool) (int, error) {
 				antinode := &antenna1.Coordinate
 				for {
 					antinode = antinode.Sub(*delta)
-					if !shared.InBounds(matrix, antinode) {
+					if !shared.InBounds(matrix, *antinode) {
 						break
 					}
 					antinodes[*antinode] = struct{}{}
@@ -102,7 +102,7 @@ func helper(input any, includeHarmonics bool) (int, error) {
 				antinode = &antenna2.Coordinate
 				for {
 					antinode = antinode.Add(*delta)
-					if !shared.InBounds(matrix, antinode) {
+					if !shared.InBounds(matrix, *antinode) {
 						break
 					}
 					antinodes[*antinode] = struct{}{}

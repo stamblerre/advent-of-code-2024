@@ -76,6 +76,11 @@ func (d *CoordinateDelta) Multiply(i int) *CoordinateDelta {
 	}
 }
 
+func (c *Coordinate) AddDirection(dir Direction) Coordinate {
+	d := DirectionToDelta(dir)
+	return *c.Add(d)
+}
+
 func (c *Coordinate) Add(d CoordinateDelta) *Coordinate {
 	return &Coordinate{
 		I: c.I + d.DeltaI,
@@ -97,7 +102,7 @@ func (c1 *Coordinate) Delta(c2 *Coordinate) *CoordinateDelta {
 	}
 }
 
-func InBounds(matrix any, coord *Coordinate) bool {
+func InBounds(matrix any, coord Coordinate) bool {
 	switch matrix := matrix.(type) {
 	case [][]rune:
 		return coord.I >= 0 && coord.J >= 0 && coord.I < len(matrix) && coord.J < len(matrix[coord.I])
@@ -117,11 +122,71 @@ const (
 	Down
 	Left
 	Up
+
 	DiagonalUpRight
 	DiagonalUpLeft
 	DiagonalDownRight
 	DiagonalDownLeft
 )
+
+func (d Direction) String() string {
+	switch d {
+	case Right:
+		return "Right"
+	case Left:
+		return "Left"
+	case Up:
+		return "Up"
+	case Down:
+		return "Down"
+	default:
+		return "Unknown"
+	}
+}
+
+func (d Direction) Clockwise() Direction {
+	switch d {
+	case DiagonalDownLeft,
+		DiagonalDownRight,
+		DiagonalUpLeft,
+		DiagonalUpRight:
+		panic("can't rotate a diagonal")
+	case Unknown:
+		panic("can't rotate an unknown direction")
+	case Up:
+		return Right
+	case Right:
+		return Down
+	case Down:
+		return Left
+	case Left:
+		return Up
+	default:
+		panic("what are you trying to rotate??")
+	}
+}
+
+func (d Direction) CounterClockwise() Direction {
+	switch d {
+	case DiagonalDownLeft,
+		DiagonalDownRight,
+		DiagonalUpLeft,
+		DiagonalUpRight:
+		panic("can't rotate a diagonal")
+	case Unknown:
+		panic("can't rotate an unknown direction")
+	case Up:
+		return Left
+	case Right:
+		return Up
+	case Down:
+		return Right
+	case Left:
+		return Down
+	default:
+		panic("what are you trying to rotate??")
+	}
+}
 
 // TODO(stamblerre): redo this
 
@@ -253,4 +318,18 @@ func RuneSliceString(s []rune) []string {
 
 type Point struct {
 	X, Y int
+}
+
+func FindRune(grid [][]rune, toFind rune) *Coordinate {
+	for i, line := range grid {
+		for j, r := range line {
+			if r == toFind {
+				return &Coordinate{
+					I: i,
+					J: j,
+				}
+			}
+		}
+	}
+	return nil
 }
